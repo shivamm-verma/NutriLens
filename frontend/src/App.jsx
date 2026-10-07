@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Plus, Sparkles, WifiOff } from "lucide-react";
+import { Linkedin, Loader2, Plus, Sparkles, WifiOff, ArrowUpRight} from "lucide-react";
 import { analyzeFood, checkHealth } from "./api";
 import useLocalStorage from "./hooks/useLocalStorage";
 import { makeThumb, scaleResult } from "./utils/nutrition";
@@ -14,10 +14,61 @@ import ItemsTable from "./components/ItemsTable";
 import MealLog from "./components/MealLog";
 import Toast from "./components/Toast";
 
+const CREATORS = [
+  {
+    name: "Shivam Verma",
+    photo: "/creators/shivam.jpg",
+    linkedin: "https://www.linkedin.com/in/shivamm-verma/",
+  },
+  {
+    name: "Nikhil Kumar",
+    photo: "/creators/nikhil.jpg",
+    linkedin: "https://www.linkedin.com/in/nikhil-kumar-b19571291/",
+  },
+];
+
+function Creator({ name, photo, linkedin }) {
+  const [broken, setBroken] = useState(false);
+  const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+
+  return (
+    <a
+      href={linkedin}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Open ${name}'s LinkedIn profile`}
+      className="card group flex w-full max-w-[280px] flex-col items-center px-8 pb-7 pt-9 text-center shadow-sm transition duration-300 hover:-translate-y-1.5 hover:border-line hover:shadow-2xl hover:shadow-black/10"
+    >
+      <span className="rounded-full p-1 ring-2 ring-line transition duration-300 group-hover:ring-[#0A66C2]">
+        {broken ? (
+          <span className="flex h-28 w-28 items-center justify-center rounded-full bg-sun text-3xl font-semibold">{initials}</span>
+        ) : (
+          <img src={photo} alt={name} onError={() => setBroken(true)} className="h-28 w-28 rounded-full object-cover" />
+        )}
+      </span>
+
+      <span className="mt-5 block text-xl font-semibold tracking-tight">{name}</span>
+
+      <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-5 py-2.5 text-sm font-medium text-white transition duration-300 group-hover:bg-[#004182]">
+        <Linkedin size={18} />
+        Connect on LinkedIn
+        <ArrowUpRight size={16} className="transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+      </span>
+    </a>
+  );
+}
+
 function Logo() {
   return (
     <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="11" fill="none" stroke="#1d1d1f" strokeWidth="3.5" />
+      <circle
+        cx="16"
+        cy="16"
+        r="11"
+        fill="none"
+        stroke="#1d1d1f"
+        strokeWidth="3.5"
+      />
       <circle cx="16" cy="16" r="4" fill="#f4a259" />
     </svg>
   );
@@ -40,19 +91,29 @@ export default function App() {
   const resultsRef = useRef(null);
 
   const closeToast = useCallback(() => setToast(null), []);
-  const showError = useCallback((message) => setToast({ type: "error", message }), []);
+  const showError = useCallback(
+    (message) => setToast({ type: "error", message }),
+    [],
+  );
 
   useEffect(() => {
     checkHealth().then((data) => setHealth({ checked: true, data }));
   }, []);
 
-  useEffect(() => () => previewUrl && URL.revokeObjectURL(previewUrl), [previewUrl]);
+  useEffect(
+    () => () => previewUrl && URL.revokeObjectURL(previewUrl),
+    [previewUrl],
+  );
 
   useEffect(() => {
-    if (result && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (result && resultsRef.current)
+      resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [result]);
 
-  const scaled = useMemo(() => (result ? scaleResult(result, factor) : null), [result, factor]);
+  const scaled = useMemo(
+    () => (result ? scaleResult(result, factor) : null),
+    [result, factor],
+  );
 
   const handleSelect = (f) => {
     const url = URL.createObjectURL(f);
@@ -97,10 +158,23 @@ export default function App() {
     if (!scaled || logged) return;
     const thumb = await makeThumb(file).catch(() => null);
     setLog((prev) =>
-      [{ id: `${Date.now()}`, ts: Date.now(), label: scaled.label, weight: scaled.portion_estimation.estimated_weight_grams, nutrition: scaled.nutrition, thumb }, ...prev].slice(0, 200)
+      [
+        {
+          id: `${Date.now()}`,
+          ts: Date.now(),
+          label: scaled.label,
+          weight: scaled.portion_estimation.estimated_weight_grams,
+          nutrition: scaled.nutrition,
+          thumb,
+        },
+        ...prev,
+      ].slice(0, 200),
     );
     setLogged(true);
-    setToast({ type: "success", message: `${scaled.label} added to today's log.` });
+    setToast({
+      type: "success",
+      message: `${scaled.label} added to today's log.`,
+    });
   };
 
   const backendDown = health.checked && !health.data;
@@ -112,11 +186,16 @@ export default function App() {
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
           <div className="flex items-center gap-2">
             <Logo />
-            <span className="text-[17px] font-semibold tracking-tight">NutriLens</span>
+            <span className="text-[17px] font-semibold tracking-tight">
+              NutriLens
+            </span>
           </div>
           {health.data && (
             <span className="flex items-center gap-2 text-xs text-mute">
-              <span className="h-2 w-2 rounded-full" style={{ background: keyMissing ? "#f4a259" : "#8cb369" }} />
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ background: keyMissing ? "#f4a259" : "#8cb369" }}
+              />
               {health.data.model}
             </span>
           )}
@@ -135,34 +214,81 @@ export default function App() {
       )}
 
       <header className="mx-auto max-w-4xl px-5 pb-10 pt-16 text-center sm:pt-24">
-        <h1 className="text-5xl font-semibold leading-[1.02] tracking-tighter2 sm:text-7xl">Know what's on your plate.</h1>
+        <h1 className="text-5xl font-semibold leading-[1.02] tracking-tighter2 sm:text-7xl">
+          Know what's on your plate.
+        </h1>
         <p className="mx-auto mt-5 max-w-xl text-xl leading-snug text-mute sm:text-2xl">
-          Snap any meal. NutriLens names the dish, weighs the portion and counts the calories.
+          Snap any meal. NutriLens names the dish, weighs the portion and counts
+          the calories.
         </p>
       </header>
 
       <section className="mx-auto max-w-2xl space-y-4 px-5 pb-14">
-        <ImageUploader previewUrl={previewUrl} onSelect={handleSelect} onClear={handleClear} onError={showError} disabled={loading} />
+        <ImageUploader
+          previewUrl={previewUrl}
+          onSelect={handleSelect}
+          onClear={handleClear}
+          onError={showError}
+          disabled={loading}
+        />
         <div>
-          <label htmlFor="hint" className="mb-2 block px-1 text-sm text-mute">Anything we should know? Optional</label>
-          <input id="hint" value={hint} onChange={(e) => setHint(e.target.value)} maxLength={300} disabled={loading}
+          <label htmlFor="hint" className="mb-2 block px-1 text-sm text-mute">
+            Anything we should know? Optional
+          </label>
+          <input
+            id="hint"
+            value={hint}
+            onChange={(e) => setHint(e.target.value)}
+            maxLength={300}
+            disabled={loading}
             placeholder="homemade, made with ghee, 2 rotis"
-            className="w-full rounded-2xl border border-line/80 bg-white px-5 py-3.5 text-[17px] placeholder:text-mute/60" />
+            className="w-full rounded-2xl border border-line/80 bg-white px-5 py-3.5 text-[17px] placeholder:text-mute/60"
+          />
         </div>
         <div className="flex justify-center pt-2">
-          <button onClick={handleAnalyze} disabled={!file || loading} className="btn-dark min-w-[220px]">
-            {loading ? <><Loader2 size={20} className="animate-spin" /> Analysing</> : <><Sparkles size={19} /> Analyse meal</>}
+          <button
+            onClick={handleAnalyze}
+            disabled={!file || loading}
+            className="btn-dark min-w-[220px]"
+          >
+            {loading ? (
+              <>
+                <Loader2 size={20} className="animate-spin" /> Analysing
+              </>
+            ) : (
+              <>
+                <Sparkles size={19} /> Analyse meal
+              </>
+            )}
           </button>
         </div>
       </section>
 
-      <PalettePicker colors={palette} fromPhoto={fromPhoto} onCopied={(hex) => setToast({ type: "success", message: `${hex} copied.` })} />
+      <PalettePicker
+        colors={palette}
+        fromPhoto={fromPhoto}
+        onCopied={(hex) =>
+          setToast({ type: "success", message: `${hex} copied.` })
+        }
+      />
 
-      <main ref={resultsRef} className="mx-auto max-w-5xl scroll-mt-20 px-5 py-14">
+      <main
+        ref={resultsRef}
+        className="mx-auto max-w-5xl scroll-mt-20 px-5 py-14"
+      >
         {loading && (
-          <div className="grid animate-pulse gap-5 lg:grid-cols-3" aria-live="polite">
-            <div className="space-y-5 lg:col-span-2"><div className="h-48 rounded-[28px] bg-fog" /><div className="h-64 rounded-[28px] bg-fog" /></div>
-            <div className="space-y-5"><div className="h-56 rounded-[28px] bg-fog" /><div className="h-40 rounded-[28px] bg-fog" /></div>
+          <div
+            className="grid animate-pulse gap-5 lg:grid-cols-3"
+            aria-live="polite"
+          >
+            <div className="space-y-5 lg:col-span-2">
+              <div className="h-48 rounded-[28px] bg-fog" />
+              <div className="h-64 rounded-[28px] bg-fog" />
+            </div>
+            <div className="space-y-5">
+              <div className="h-56 rounded-[28px] bg-fog" />
+              <div className="h-40 rounded-[28px] bg-fog" />
+            </div>
           </div>
         )}
 
@@ -170,28 +296,60 @@ export default function App() {
           <div className="rise grid items-start gap-5 lg:grid-cols-3">
             <div className="space-y-5 lg:col-span-2">
               <DishHeader result={scaled} />
-              <NutritionCard nutrition={scaled.nutrition} healthScore={scaled.health_score} healthNotes={scaled.health_notes} />
+              <NutritionCard
+                nutrition={scaled.nutrition}
+                healthScore={scaled.health_score}
+                healthNotes={scaled.health_notes}
+              />
               <ItemsTable items={scaled.items} />
             </div>
             <div className="space-y-5 lg:sticky lg:top-20">
               <PortionBadge portion={scaled.portion_estimation} />
               <PortionAdjuster factor={factor} onChange={setFactor} />
-              <button onClick={handleLog} disabled={logged} className="btn-dark w-full">
+              <button
+                onClick={handleLog}
+                disabled={logged}
+                className="btn-dark w-full"
+              >
                 <Plus size={18} /> {logged ? "Added to log" : "Add to log"}
               </button>
               <p className="px-2 text-xs leading-relaxed text-mute">
-                Estimates come from a photo and can be off by 20% or more. Use them as a guide, not medical advice.
+                Estimates come from a photo and can be off by 20% or more. Use
+                them as a guide, not medical advice.
               </p>
             </div>
           </div>
         )}
 
         <div className={scaled || loading ? "mt-14" : ""}>
-          <MealLog entries={log} goal={goal} onGoalChange={setGoal} onDelete={(id) => setLog((p) => p.filter((e) => e.id !== id))} onClear={() => setLog([])} />
+          <MealLog
+            entries={log}
+            goal={goal}
+            onGoalChange={setGoal}
+            onDelete={(id) => setLog((p) => p.filter((e) => e.id !== id))}
+            onClear={() => setLog([])}
+          />
         </div>
       </main>
 
-      <footer className="border-t border-line/60 py-8 text-center text-xs text-mute">NutriLens estimates nutrition from photos using Google Gemini.</footer>
+      <section className="border-t border-line/60 bg-fog/50">
+        <div className="mx-auto max-w-5xl px-5 py-16 text-center">
+          <h2 className="text-3xl font-semibold tracking-tighter2 sm:text-4xl">
+            Made by
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-[17px] text-mute">
+            The people behind NutriLens.
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-6 sm:flex-row">
+            {CREATORS.map((c) => (
+              <Creator key={c.name} {...c} />
+            ))}
+          </div>
+        </div>
+      </section>
+      <footer className="border-t border-line/60 py-6 text-center text-xs text-mute">
+        NutriLens estimates nutrition from photos using Google Gemini.
+      </footer>
       <Toast toast={toast} onClose={closeToast} />
     </div>
   );
